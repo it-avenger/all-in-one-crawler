@@ -1,0 +1,18 @@
+﻿<Window x:Class="CsvApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CsvApp"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="700" Width="1000">
+    <Grid>
+        <DataGrid Name="modelGrid" HorizontalAlignment="Left" Height="231" Margin="86,39,0,0" VerticalAlignment="Top" Width="858"/>
+        <DataGrid Name="resultGrid" HorizontalAlignment="Left" Height="230" Margin="86,342,0,0" VerticalAlignment="Top" Width="858"/>
+        <Button Content="Load Existing Model" HorizontalAlignment="Left" Margin="434,595,0,0" VerticalAlignment="Top" Width="156" Height="46" Click="BtnLoadExistingModel"/>
+        <Button Content="Start Crawling" HorizontalAlignment="Left" Margin="778,595,0,0" VerticalAlignment="Top" Width="144" Height="46" Click="BtnStartCrawling" RenderTransformOrigin="0.125,0.565"/>
+        <Button Content="Update and Load Model" HorizontalAlignment="Left" Margin="96,595,0,0" VerticalAlignment="Top" Width="167" Height="46" Click="BtnUpdateModel"/>
+        <Label Content="Result" HorizontalAlignment="Left" Height="30" Margin="96,285,0,0" VerticalAlignment="Top" Width="137"/>
+
+    </Grid>
+</Window>
