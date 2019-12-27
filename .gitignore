@@ -5,3 +5,5 @@
 *.png
 *.csv
 /output/
+/ExcelApp/.vs
+agroparts.py
