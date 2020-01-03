@@ -14,7 +14,7 @@ from selenium.webdriver.common.keys import Keys
 
 from lxml import etree, html
 
-logging.basicConfig(filename="test.log")
+logging.basicConfig(filename="logs/test.log")
 
 #Creating an object 
 logger=logging.getLogger()
@@ -40,9 +40,11 @@ CSV_HEADERS = ['field', 'product_type', 'product_line', 'serie', 'model',
 
 def post_api(url, payload):
     try:
-        r = requests.post(MODEL_FACE_URL, data=payload)
+        r = requests.post(url, data=payload)
         return r.json()
     except Exception as e:
+        import pdb
+        pdb.set_trace()
         raise Exception(e)
 
 def get_api(url):
@@ -55,11 +57,10 @@ def get_api(url):
 
 def log(msg):
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
-    logging.info("{} at {}.\n".format(msg, current_time))
+    logger.info("{} at {}.\n".format(msg, current_time))
 
 if __name__ == "__main__":
     results = []
-    existings = []
     number_of_results = 0
     ext_models = []
     output_path = "{}/output".format(BASE_DIR)
@@ -76,84 +77,81 @@ if __name__ == "__main__":
             writer.writeheader()
 
     run_type = "model"
-    if sys.argv[1] == "output":
+    if len(sys.argv) > 1 and sys.argv[1] == "output":
         run_type = "output"
 
     with open(csv_path) as csv_file:
         reader = csv.DictReader(csv_file)
         for row in reader:
-            existings.append(row)
             if 'model_id' in row and row['model_id'] not in ext_models:
                 ext_models.append(row['model_id'])
 
     if run_type == "model":
-        # with open(output_path+'/models.csv', mode='w', newline='') as csv_file:
-        with open(output_path+'/models.csv', mode='w') as csv_file:
+        with open(output_path+'/models.csv', mode='w', newline='') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=CSV_HEADERS)
             writer.writeheader()
 
-            try:
-                payload = { 'facets[]': 'type_s'}
-                product_types = post_api(MODEL_FACE_URL, payload)
+            # try:
+            payload = { 'facets[]': 'type_s'}
+            product_types = post_api(MODEL_FACE_URL, payload)
 
-                if product_types and len(product_types) > 0:
-                    for ptype in product_types[0]['facetValues']:
-                        item = dict()
+            if product_types and len(product_types) > 0:
+                for ptype in product_types[0]['facetValues']:
+                    item = dict()
 
-                        product_lines = post_api(MODEL_FACE_URL, {
-                            'selectedValues[type_s]': ptype, 'facets[]': 'sub_type_s' })
+                    product_lines = post_api(MODEL_FACE_URL, {
+                        'selectedValues[type_s]': ptype, 'facets[]': 'sub_type_s' })
 
-                        if product_lines and len(product_lines) > 0:
-                            for pline in product_lines[0]['facetValues']:
-                                series = post_api(MODEL_FACE_URL, {
-                                    'selectedValues[type_s]': ptype,
-                                    'selectedValues[sub_type_s]': pline,
-                                    'facets[]': 'model_line_s'
-                                })
+                    if product_lines and len(product_lines) > 0:
+                        for pline in product_lines[0]['facetValues']:
+                            series = post_api(MODEL_FACE_URL, {
+                                'selectedValues[type_s]': ptype,
+                                'selectedValues[sub_type_s]': pline,
+                                'facets[]': 'model_line_s'
+                            })
 
-                                if series and len(series) > 0:
-                                    for pserie in series[0]['facetValues']:
-                                        models = post_api(MODEL_FACE_URL, {
-                                            'start': 0,
-                                            'selectedValues[type_s]': ptype,
-                                            'selectedValues[sub_type_s]': pline,
-                                            'selectedValues[model_line_s]': pserie,
-                                            'method': 'getAllModel',
-                                            'limit': 30,
-                                            'field_list': [
-                                                {"name":"product_name_s"},
-                                                {"name":"product_id"},
-                                                {"name":"code"}
-                                            ],
-                                            'fields': None,
-                                            'facets[]': 'model_line_s'
-                                        })
+                            if series and len(series) > 0:
+                                for pserie in series[0]['facetValues']:
+                                    models = post_api(MODEL_FACE_URL, {
+                                        'start': 0,
+                                        'selectedValues[type_s]': ptype,
+                                        'selectedValues[sub_type_s]': pline,
+                                        'selectedValues[model_line_s]': pserie,
+                                        'method': 'getAllModel',
+                                        'limit': 30,
+                                        'field_list': [
+                                            {"name":"product_name_s"},
+                                            {"name":"product_id"},
+                                            {"name":"code"}
+                                        ],
+                                        'fields': None,
+                                        'facets[]': 'model_line_s'
+                                    })
 
-                                        if models and 'numFound' in models and models['numFound'] > 0:
-                                            for pmodel in models['docs']:
-                                                item = {
-                                                    'field': DEFAULT_FIELD,
-                                                    'product_type': ptype,
-                                                    'product_line': pline,
-                                                    'serie': pserie,
-                                                    'model_id': pmodel['model_id'],
-                                                    'product_id': pmodel['product_id'],
-                                                    'product_name': pmodel['product_name'],
-                                                    'is_scraped': 0
-                                                }
+                                    if models and 'numFound' in models and models['numFound'] > 0:
+                                        for pmodel in models['docs']:
+                                            item = {
+                                                'field': DEFAULT_FIELD,
+                                                'product_type': ptype,
+                                                'product_line': pline,
+                                                'serie': pserie,
+                                                'model_id': pmodel['model_id'],
+                                                'product_id': pmodel['product_id'],
+                                                'product_name': pmodel['product_name'],
+                                                'is_scraped': 0
+                                            }
 
-                                                if pmodel['model_id'] in ext_models:
-                                                    item['is_scraped'] = 1
+                                            if pmodel['model_id'] in ext_models:
+                                                item['is_scraped'] = 1
 
-                                                number_of_results = number_of_results + 1
-                                                results.append(item)
-                                                writer.writerow(item)
-            except Exception as e:
-                print("Model Error!")
-                log("** line: 140 **: ")
-                log(e)
+                                            number_of_results = number_of_results + 1
+                                            results.append(item)
+                                            writer.writerow(item)
+            # except Exception as e:
+            #     print("Model Error!\n")
+            #     log("** line: 140 **: {}".format(str(e)))
 
-        print("Model Done!")
+        print("Model Done!\n")
 
     if run_type == "output":
         # if sys.argv[2] == "new":
@@ -171,8 +169,7 @@ if __name__ == "__main__":
         #         if row['model_id'] not in ext_models:
         #             ext_models.append(row)
 
-        # with open(output_path+'/output.csv', mode='a', newline='') as csv_file:
-        with open(output_path+'/output.csv', mode='w') as csv_file:
+        with open(output_path+'/output.csv', mode='a', newline='') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=CSV_HEADERS)
             writer.writeheader()
 
@@ -240,14 +237,14 @@ if __name__ == "__main__":
                                             writer.writerow(entry)
 
                         except Exception as e:
-                            print("Error!")
+                            print("Error!\n")
                             log("** line: 231 **: ")
                             log(e)
-                print("Done!")
+                print("Done!\n")
                 driver.quit()
                 csv_file.close()
             except Exception as e:
-                print("Error!")
+                print("Error!\n")
                 log("** line: 237 **: ")
                 log(e)
                 driver.quit()

@@ -230,9 +230,9 @@ namespace CsvApp
                 using (StreamReader reader = process.StandardOutput)
                 {
                     string result = reader.ReadToEnd();
+                    string firstLineOfResult = result.Trim().Split('\n')[0];
 
-                    Console.WriteLine("~~~~~~~~~~~~~~~~~~~~~~~~: " + result.Trim());
-                    switch(result.Trim())
+                    switch (firstLineOfResult.Trim())
                     {
                         case "Model Done!":
                             LoadCSVToModelGrid($"{this.basePath}\\output\\models.csv");
@@ -252,7 +252,9 @@ namespace CsvApp
                             MessageBox.Show("Crawling Error!");
                             break;
 
-                        default: break;
+                        default:
+                            MessageBox.Show(result.Trim());
+                            break;
 
                     }
                 }
